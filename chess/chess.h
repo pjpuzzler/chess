@@ -8,6 +8,8 @@ The original source code can be found here: https://github.com/niklasf/python-ch
 A chess library with move generation and validation,
 and XBoard/UCI engine communication.
 */
+
+
 #pragma once
 #include <string>
 #include <unordered_map>
@@ -914,9 +916,10 @@ namespace chess
 
         int count() const;
 
-        auto  begin() const;
+        std::vector<Move>::const_iterator begin() const;
 
-        auto  end() const;
+        std::vector<Move>::const_iterator end() const;
+
 
         Board get_board() const;
 
@@ -939,9 +942,9 @@ namespace chess
 
         int count() const;
 
-        auto begin() const;
+        std::vector<Move>::const_iterator begin() const;
 
-        auto end() const;
+        std::vector<Move>::const_iterator end() const;
 
         Board get_board() const;
 
@@ -1163,4 +1166,6 @@ struct std::hash<chess::Piece>
     }
 };
 
+
 #include "./chess.cpp"
+
