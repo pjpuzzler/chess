@@ -2738,11 +2738,11 @@ namespace chess
             {
                 this->ep_square = move.from_square - 8;
             }
-            else if (move.to_square == *ep_square && (abs(diff) == 7 || abs(diff) == 9) && !captured_piece_type)
+            else if (move.to_square == ep_square.value() && (abs(diff) == 7 || abs(diff) == 9) && !captured_piece_type)
             {
                 // Remove pawns captured en passant.
                 int down = this->turn == WHITE ? -8 : 8;
-                capture_square = *ep_square + down;
+                capture_square = ep_square.value() + down;
                 captured_piece_type = this->_remove_piece_at(capture_square);
             }
         }
