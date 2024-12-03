@@ -2713,7 +2713,7 @@ namespace chess
                 this->castling_rights &= ~BB_RANK_8;
             }
         }
-        else if (captured_piece_type && *captured_piece_type == KING && !(this->promoted & to_bb))
+        else if (captured_piece_type && captured_piece_type.value() == KING && !(this->promoted & to_bb))
         {
             if (this->turn == WHITE && square_rank(move.to_square) == 7)
             {
