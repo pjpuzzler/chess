@@ -2738,7 +2738,7 @@ namespace chess
             {
                 this->ep_square = move.from_square - 8;
             }
-            else if (move.to_square == ep_square.value() && (abs(diff) == 7 || abs(diff) == 9) && !captured_piece_type)
+            else if (ep_square.has_value() && move.to_square == ep_square.value() && (abs(diff) == 7 || abs(diff) == 9) && !captured_piece_type)
             {
                 // Remove pawns captured en passant.
                 int down = this->turn == WHITE ? -8 : 8;
