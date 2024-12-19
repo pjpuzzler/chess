@@ -9,6 +9,8 @@ A chess library with move generation and validation,
 and XBoard/UCI engine communication.
 */
 
+
+#pragma once
 #include <string>
 #include <unordered_map>
 #include <stdexcept>
@@ -267,14 +269,14 @@ namespace chess
     const Bitboard BB_DARK_SQUARES = 0xaa55'aa55'aa55'aa55;
 
     const Bitboard BB_FILES[] = {
-        0x0101'0101'0101'0101UL << 0,
-        0x0101'0101'0101'0101UL << 1,
-        0x0101'0101'0101'0101UL << 2,
-        0x0101'0101'0101'0101UL << 3,
-        0x0101'0101'0101'0101UL << 4,
-        0x0101'0101'0101'0101UL << 5,
-        0x0101'0101'0101'0101UL << 6,
-        0x0101'0101'0101'0101UL << 7,
+        static_cast<Bitboard>(0x0101'0101'0101'0101UL << 0),
+        static_cast<Bitboard>(0x0101'0101'0101'0101UL << 1),
+        static_cast<Bitboard>(0x0101'0101'0101'0101UL << 2),
+        static_cast<Bitboard>(0x0101'0101'0101'0101UL << 3),
+        static_cast<Bitboard>(0x0101'0101'0101'0101UL << 4),
+        static_cast<Bitboard>(0x0101'0101'0101'0101UL << 5),
+        static_cast<Bitboard>(0x0101'0101'0101'0101UL << 6),
+        static_cast<Bitboard>(0x0101'0101'0101'0101UL << 7),
     },
                    BB_FILE_A = 0x0101'0101'0101'0101UL << 0, BB_FILE_B = 0x0101'0101'0101'0101UL << 1, BB_FILE_C = 0x0101'0101'0101'0101UL << 2, BB_FILE_D = 0x0101'0101'0101'0101UL << 3, BB_FILE_E = 0x0101'0101'0101'0101UL << 4, BB_FILE_F = 0x0101'0101'0101'0101UL << 5, BB_FILE_G = 0x0101'0101'0101'0101UL << 6, BB_FILE_H = 0x0101'0101'0101'0101UL << 7;
 
@@ -914,9 +916,10 @@ namespace chess
 
         int count() const;
 
-        auto begin() const;
+        std::vector<Move>::const_iterator begin() const;
 
-        auto end() const;
+        std::vector<Move>::const_iterator end() const;
+
 
         Board get_board() const;
 
@@ -939,9 +942,9 @@ namespace chess
 
         int count() const;
 
-        auto begin() const;
+        std::vector<Move>::const_iterator begin() const;
 
-        auto end() const;
+        std::vector<Move>::const_iterator end() const;
 
         Board get_board() const;
 
@@ -1162,3 +1165,7 @@ struct std::hash<chess::Piece>
         return piece.piece_type + (piece.color ? -1 : 5);
     }
 };
+
+
+#include "./chess.cpp"
+

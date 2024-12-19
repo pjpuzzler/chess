@@ -8,10 +8,11 @@ The original source code can be found here: https://github.com/niklasf/python-ch
 A chess library with move generation and validation,
 and XBoard/UCI engine communication.
 */
-
-#include "chess.h"
-
+ 
+//#include "./chess.h"
+//#pragma once
 #include <iostream>
+#include "chess.h"
 
 namespace chess
 {
@@ -518,14 +519,14 @@ namespace chess
             return Move(square, square, drop);
         }
         else if (4 <= uci.length() && uci.length() <= 5)
-        {
+        {   
             auto it = std::find(std::begin(SQUARE_NAMES), std::end(SQUARE_NAMES), uci.substr(0, 2));
             if (it == std::end(SQUARE_NAMES))
             {
                 throw std::invalid_argument("");
             }
             Square from_square = std::distance(SQUARE_NAMES, it);
-            auto it2 = std::find(std::begin(SQUARE_NAMES), std::end(SQUARE_NAMES), uci.substr(2, 4));
+            auto it2 = std::find(std::begin(SQUARE_NAMES), std::end(SQUARE_NAMES), uci.substr(2, 2));
             if (it2 == std::end(SQUARE_NAMES))
             {
                 throw std::invalid_argument("");
@@ -662,7 +663,7 @@ namespace chess
         {
             Bitboard mask = BB_SQUARES[square];
             Color color = bool(this->occupied_co[WHITE] & mask);
-            return Piece(*piece_type, color);
+            return Piece(piece_type.value(), color);
         }
         else
         {
@@ -889,7 +890,7 @@ namespace chess
         */
         Color color = bool(this->occupied_co[WHITE] & BB_SQUARES[square]);
         std::optional<PieceType> piece_type = this->_remove_piece_at(square);
-        return piece_type ? std::optional(Piece(*piece_type, color)) : std::nullopt;
+        return piece_type ? std::optional(Piece(piece_type.value(), color)) : std::nullopt;
     }
 
     void BaseBoard::set_piece_at(Square square, const std::optional<Piece> &piece, bool promoted)
@@ -1399,27 +1400,31 @@ namespace chess
         std::optional<PieceType> piece_type = this->piece_type_at(square);
         Bitboard mask = BB_SQUARES[square];
 
-        if (*piece_type == PAWN)
+        if (!piece_type)
+        {
+            return std::nullopt;
+        }
+        if (piece_type.value() == PAWN)
         {
             this->pawns ^= mask;
         }
-        else if (*piece_type == KNIGHT)
+        else if (piece_type.value() == KNIGHT)
         {
             this->knights ^= mask;
         }
-        else if (*piece_type == BISHOP)
+        else if (piece_type.value() == BISHOP)
         {
             this->bishops ^= mask;
         }
-        else if (*piece_type == ROOK)
+        else if (piece_type.value() == ROOK)
         {
             this->rooks ^= mask;
         }
-        else if (*piece_type == QUEEN)
+        else if (piece_type.value() == QUEEN)
         {
             this->queens ^= mask;
         }
-        else if (*piece_type == KING)
+        else if (piece_type.value() == KING)
         {
             this->kings ^= mask;
         }
@@ -2592,7 +2597,7 @@ namespace chess
                 break;
             }
 
-            if (this->move_stack.size() < count - 1)
+            if (static_cast<int>(this->move_stack.size()) < count - 1)
             {
                 break;
             }
@@ -2697,7 +2702,7 @@ namespace chess
 
         // Update castling rights.
         this->castling_rights &= ~to_bb & ~from_bb;
-        if (*piece_type == KING && !promoted)
+        if (piece_type.value() == KING && !promoted)
         {
             if (this->turn == WHITE)
             {
@@ -2708,7 +2713,7 @@ namespace chess
                 this->castling_rights &= ~BB_RANK_8;
             }
         }
-        else if (captured_piece_type && *captured_piece_type == KING && !(this->promoted & to_bb))
+        else if (captured_piece_type && captured_piece_type.value() == KING && !(this->promoted & to_bb))
         {
             if (this->turn == WHITE && square_rank(move.to_square) == 7)
             {
@@ -2721,7 +2726,7 @@ namespace chess
         }
 
         // Handle special pawn moves.
-        if (*piece_type == PAWN)
+        if (piece_type.value() == PAWN)
         {
             int diff = move.to_square - move.from_square;
 
@@ -2733,11 +2738,11 @@ namespace chess
             {
                 this->ep_square = move.from_square - 8;
             }
-            else if (move.to_square == *ep_square && (abs(diff) == 7 || abs(diff) == 9) && !captured_piece_type)
+            else if (ep_square.has_value() && move.to_square == ep_square.value() && (abs(diff) == 7 || abs(diff) == 9) && !captured_piece_type)
             {
                 // Remove pawns captured en passant.
                 int down = this->turn == WHITE ? -8 : 8;
-                capture_square = *ep_square + down;
+                capture_square = ep_square.value() + down;
                 captured_piece_type = this->_remove_piece_at(capture_square);
             }
         }
@@ -2750,7 +2755,7 @@ namespace chess
         }
 
         // Castling.
-        bool castling = *piece_type == KING && this->occupied_co[this->turn] & to_bb;
+        bool castling = piece_type.value() == KING && this->occupied_co[this->turn] & to_bb;
         if (castling)
         {
             bool a_side = square_file(move.to_square) < square_file(move.from_square);
@@ -2774,7 +2779,7 @@ namespace chess
         if (!castling)
         {
             bool was_promoted = bool(this->promoted & to_bb);
-            this->_set_piece_at(move.to_square, *piece_type, this->turn, promoted);
+            this->_set_piece_at(move.to_square, piece_type.value(), this->turn, promoted);
 
             if (captured_piece_type)
             {
@@ -3302,13 +3307,13 @@ namespace chess
             parts.push_back(s2);
         }
         int i, splits;
-        for (i = 0, splits = 0; i < s.length() && splits < 4; ++i)
+        for (i = 0, splits = 0; i < static_cast<int>(s.length()) && splits < 4; ++i)
         {
             if (isspace(s[i]))
             {
                 ++splits;
                 ++i;
-                while (i < s.length() && isspace(s[i]))
+                while (i < static_cast<int>(s.length()) && isspace(s[i]))
                 {
                     ++i;
                 }
@@ -3767,7 +3772,7 @@ namespace chess
         rights and moves that cede en passant are irreversible.
 
         This method has false-negatives with forced lines. For example, a check
-        that will force the king to lose castling rights is not considered
+        that will force the king to losеcastling rights is not considered
         irreversible. Only the actual king move is.
         */
         return this->is_zeroing(move) || this->_reduces_castling_rights(move) || this->has_legal_en_passant();
@@ -4302,7 +4307,7 @@ namespace chess
         board.fullmove_number = this->fullmove_number;
         board.halfmove_clock = this->halfmove_clock;
 
-        if (std::holds_alternative<bool>(stack) && std::get<bool>(stack) || std::holds_alternative<int>(stack) && std::get<int>(stack))
+        if ((std::holds_alternative<bool>(stack) && std::get<bool>(stack)) || (std::holds_alternative<int>(stack) && std::get<int>(stack)))
         {
             stack = int(std::holds_alternative<bool>(stack) && std::get<bool>(stack) ? this->move_stack.size() : std::get<int>(stack));
             board.move_stack = std::vector(std::end(this->move_stack) - std::get<int>(stack), std::end(this->move_stack));
@@ -4785,22 +4790,22 @@ namespace chess
         }
         bool capture = this->is_capture(move);
 
-        if (*piece_type != PAWN)
+        if (piece_type.value() != PAWN)
         {
-            san = std::toupper(piece_symbol(*piece_type));
+            san = std::toupper(piece_symbol(piece_type.value()));
         }
 
         if (long_)
         {
             san += SQUARE_NAMES[move.from_square];
         }
-        else if (*piece_type != PAWN)
+        else if (piece_type.value() != PAWN)
         {
             // Get ambiguous move candidates.
             // Relevant candidates: not exactly the current move,
             // but to the same square.
             Bitboard others = 0;
-            Bitboard from_mask = this->pieces_mask(*piece_type, this->turn);
+            Bitboard from_mask = this->pieces_mask(piece_type.value(), this->turn);
             from_mask &= ~BB_SQUARES[move.from_square];
             Bitboard to_mask = BB_SQUARES[move.to_square];
             for (const Move &candidate : this->generate_legal_moves(from_mask, to_mask))
@@ -4869,8 +4874,8 @@ namespace chess
         Bitboard cr = this->clean_castling_rights();
         Bitboard touched = BB_SQUARES[move.from_square] ^ BB_SQUARES[move.to_square];
         return bool(touched & cr ||
-                    cr & BB_RANK_1 && touched & this->kings & this->occupied_co[WHITE] & ~this->promoted ||
-                    cr & BB_RANK_8 && touched & this->kings & this->occupied_co[BLACK] & ~this->promoted);
+                    (cr & BB_RANK_1 && touched & this->kings & this->occupied_co[WHITE] & ~this->promoted) ||
+                    (cr & BB_RANK_8 && touched & this->kings & this->occupied_co[BLACK] & ~this->promoted));
     }
 
     std::optional<Square> Board::_valid_ep_square() const
@@ -4937,8 +4942,8 @@ namespace chess
 
         Square last_double = *this->ep_square + (this->turn == WHITE ? -8 : 8);
 
-        Bitboard occupancy = (this->occupied & ~BB_SQUARES[last_double] &
-                                  ~BB_SQUARES[capturer] |
+        Bitboard occupancy = ((this->occupied & ~BB_SQUARES[last_double] &
+                                  ~BB_SQUARES[capturer]) |
                               BB_SQUARES[*this->ep_square]);
 
         // Horizontal attack on the fifth or fourth rank.
@@ -5166,12 +5171,12 @@ namespace chess
         return this->_iter.size();
     }
 
-    auto PseudoLegalMoveGenerator::begin() const
+    std::vector<Move>::const_iterator PseudoLegalMoveGenerator::begin() const
     {
         return std::begin(this->_iter);
     }
 
-    auto PseudoLegalMoveGenerator::end() const
+    std::vector<Move>::const_iterator PseudoLegalMoveGenerator::end() const
     {
         return std::end(this->_iter);
     }
@@ -5228,12 +5233,12 @@ namespace chess
         return this->_iter.size();
     }
 
-    auto LegalMoveGenerator::begin() const
+    std::vector<Move>::const_iterator LegalMoveGenerator::begin() const
     {
         return std::begin(this->_iter);
     }
 
-    auto LegalMoveGenerator::end() const
+    std::vector<Move>::const_iterator LegalMoveGenerator::end() const
     {
         return std::end(this->_iter);
     }
